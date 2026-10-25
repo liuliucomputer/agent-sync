@@ -203,15 +203,15 @@ python server.py
 
 <script>
 // ── 仓库地址 ──
-const GITHUB_URL = "https://github.com/liuliucomputer/agent-sync.git";
 const GITCODE_URL = "https://gitcode.net/liuliucomputer/agent-sync.git";
+const GITHUB_URL = "https://github.com/liuliucomputer/agent-sync.git";
 // 渲染克隆命令
 (function () {
   const cmd =
-    `# 方式一：GitHub（主源）\n` +
-    `git clone ${GITHUB_URL}\n\n` +
-    `# 方式二：GitCode 镜像源（国内更快）\n` +
+    `# 主源：GitCode（国内直连）\n` +
     `git clone ${GITCODE_URL}\n\n` +
+    `# 备选：GitHub（若网络可访问）\n` +
+    `git clone ${GITHUB_URL}\n\n` +
     `cd agent-sync\npython server.py\n# 浏览器打开 http://localhost:8080`;
   const el = document.getElementById("cloneCmd");
   if (el) el.textContent = cmd;
