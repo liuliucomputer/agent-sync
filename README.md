@@ -8,8 +8,15 @@
 
 ## 一、拉取并运行（推荐，本地优先）
 
+源码托管在 GitHub，国内可走 GitCode 镜像源下载：
+
 ```bash
+# 方式一：GitHub（主源）
+git clone https://github.com/liuliucomputer/agent-sync.git
+
+# 方式二：GitCode 镜像源（国内更快，需先在 GitCode 导入该 GitHub 仓库）
 git clone https://gitcode.net/liuliucomputer/agent-sync.git
+
 cd agent-sync
 python server.py
 # 浏览器打开 http://localhost:8080
