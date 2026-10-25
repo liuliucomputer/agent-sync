@@ -9,7 +9,7 @@
 ## 一、拉取并运行（推荐，本地优先）
 
 ```bash
-git clone https://gitcode.net/<你的用户名>/agent-sync.git
+git clone https://gitcode.net/liuliucomputer/agent-sync.git
 cd agent-sync
 python server.py
 # 浏览器打开 http://localhost:8080
