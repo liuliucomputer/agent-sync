@@ -75,9 +75,24 @@ python main.py
 
 ```
 agent-sync/
-├── engine.py        # 检测 / 读取 / 写入 / 同步核心逻辑（零依赖）
-├── server.py        # 网页版后端（Python 内置 http.server）
-├── main.py          # 桌面版（tkinter）
-├── web/index.html   # 前端界面（含访问闸门 + 拉取说明）
-└── requirements.txt # 桌面版打包依赖
+├── engine.py            # 检测 / 读取 / 写入 / 同步核心逻辑（零依赖）
+├── server.py            # 网页版后端（Python 内置 http.server）
+├── main.py              # 桌面版（tkinter）
+├── web/index.html       # 前端界面（含访问闸门 + 拉取说明）
+├── push_to_github.bat   # 维护者：一键推送到 GitHub（Windows）
+├── push_to_github.sh    # 维护者：一键推送到 GitHub（macOS/Linux）
+└── requirements.txt     # 桌面版打包依赖
 ```
+
+## 六、维护者：如何把代码推送到 GitHub（离线 bundle 方式）
+
+源码通过离线 `agent-sync.bundle` 分发。若要把最新代码推到 GitHub 上的
+`liuliucomputer/agent-sync`，在**能访问 github.com** 的机器上（必要时开 VPN）：
+
+1. 把 `agent-sync.bundle` 与 `push_to_github.bat` / `push_to_github.sh` 拷到同一目录
+2. 运行对应脚本：
+   - Windows：双击 `push_to_github.bat`
+   - macOS/Linux：在终端执行 `bash push_to_github.sh`
+3. 脚本会依次：从 bundle 还原仓库 → 检查 `gh` 登录 → 创建 `agent-sync` 公开仓库 → 推送 `master`
+
+前提：目标机器已 `gh auth login -h github.com`（仓库已存在则自动跳过创建直接推送）。
