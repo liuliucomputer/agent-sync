@@ -8,14 +8,14 @@
 
 ## 一、拉取并运行（推荐，本地优先）
 
-源码托管在 GitCode（国内可直连），GitHub 因网络限制作为可选镜像：
+源码托管在 GitHub，国内可走 GitCode 镜像源下载：
 
 ```bash
-# 主源：GitCode（推荐，国内直连）
-git clone https://gitcode.net/liuliucomputer/agent-sync.git
-
-# 备选：GitHub（若你的网络可访问）
+# 主源：GitHub
 git clone https://github.com/liuliucomputer/agent-sync.git
+
+# 国内镜像：GitCode（需先在 GitCode 导入该 GitHub 仓库）
+git clone https://gitcode.net/liuliucomputer/agent-sync.git
 
 cd agent-sync
 python server.py
