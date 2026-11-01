@@ -96,3 +96,20 @@ agent-sync/
 3. 脚本会依次：从 bundle 还原仓库 → 检查 `gh` 登录 → 创建 `agent-sync` 公开仓库 → 推送 `master`
 
 前提：目标机器已 `gh auth login -h github.com`（仓库已存在则自动跳过创建直接推送）。
+
+### 用 Token 登录 / 推送（无需浏览器，适合受限网络）
+
+Token（PAT）只解决**认证**，不解决**网络**——运行脚本的机器仍需能访问 github.com。
+
+1. **拿 Token**：GitHub 网页 → 头像 → Settings → Developer settings →
+   Personal access tokens → Generate new token，勾选 `repo` 权限，生成后复制 `ghp_xxx`
+2. **选一种方式让脚本用上 Token**：
+   - **方式 A（推荐，纯 git，无需装 gh）**：在同目录放一个 `token.txt`，
+     第一行写 token；或运行前 `set GIT_TOKEN=ghp_xxx`（Windows）/ `export GIT_TOKEN=ghp_xxx`（mac/Linux）
+   - **方式 B（走 gh 自动建库）**：`set GH_TOKEN=ghp_xxx` / `export GH_TOKEN=ghp_xxx`
+   - 脚本检测到 token 后会自动跳过交互登录直接推送
+3. **纯 git 方式需先建库**：若用 `GIT_TOKEN` / `token.txt`（方式 A），GitHub 上需先手动建一个
+   名为 `agent-sync` 的**公开**空仓库，再运行脚本；`GH_TOKEN` 方式（B）脚本会自动建库
+
+> 安全：Token 等同于账号密码，不要写进代码或截图，用完可在 GitHub 撤销；
+> 若用 `token.txt`，请勿将其提交或分享。
