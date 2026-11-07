@@ -8,7 +8,7 @@
 
 ## 一、拉取并运行（推荐，本地优先）
 
-源码托管在 GitHub，国内可走 GitCode 镜像源下载：
+源码已托管在 GitHub 公开仓库 `github.com/liuliucomputer/agent-sync`，国内可走 GitCode 镜像源下载：
 
 ```bash
 # 主源：GitHub
@@ -86,7 +86,10 @@ agent-sync/
 
 ## 六、维护者：如何把代码推送到 GitHub（离线 bundle 方式）
 
-源码通过离线 `agent-sync.bundle` 分发。若要把最新代码推到 GitHub 上的
+仓库已上线：https://github.com/liuliucomputer/agent-sync （公开，分支 `master`）。
+网络可达且 `gh` 已登录时，日常更新直接 `git push` 即可。
+
+源码另通过离线 `agent-sync.bundle` 分发。若要把代码推到 GitHub 上的
 `liuliucomputer/agent-sync`，在**能访问 github.com** 的机器上（必要时开 VPN）：
 
 1. 把 `agent-sync.bundle` 与 `push_to_github.bat` / `push_to_github.sh` 拷到同一目录
