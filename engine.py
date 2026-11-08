@@ -11,6 +11,7 @@ import sqlite3
 import time
 import threading
 import hashlib
+import re
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
@@ -145,6 +146,8 @@ def read_claude_sessions(projects_path: str) -> list[Msg]:
     if not os.path.isdir(projects_path):
         return msgs
     for proj_dir in os.listdir(projects_path):
+        if proj_dir == "sync-agent":   # 本工具写入的目录，跳过
+            continue
         proj_path = os.path.join(projects_path, proj_dir)
         if not os.path.isdir(proj_path):
             continue
@@ -192,7 +195,7 @@ def read_claude_sessions(projects_path: str) -> list[Msg]:
                         d = json.loads(line)
                         sid = d.get("sessionId", "")
                         display = d.get("display", "")
-                        if display:
+                        if display and not _SYNC_SID_RE.match(sid or ""):
                             msgs.append(Msg("user", display, _ts(d), sid))
                     except json.JSONDecodeError:
                         continue
@@ -209,6 +212,8 @@ def read_codex_sessions(sessions_path: str) -> list[Msg]:
     for root, dirs, files in os.walk(sessions_path):
         for sf in files:
             if not sf.endswith(".jsonl"):
+                continue
+            if "-sync" in sf:          # 本工具写入的 rollout 文件，跳过
                 continue
             fp = os.path.join(root, sf)
             try:
@@ -395,6 +400,15 @@ def read_openclaw_sessions(db_path: str) -> list[Msg]:
     return msgs
 
 
+# 本工具写入的消息，sessionId / session_id 统一为 "sync-<数字或日期>"
+_SYNC_SID_RE = re.compile(r"^sync-\d")
+
+
+def _is_sync_msg(m: Msg) -> bool:
+    """判断是否为同步工具自己写入的消息（必须排除，防止回环放大）"""
+    return bool(_SYNC_SID_RE.match(m.session_id or ""))
+
+
 def read_all(agent: dict) -> list[Msg]:
     """读取指定 agent 的所有对话消息。agent 是 detect_agents() 返回的 dict"""
     all_msgs = []
@@ -416,6 +430,8 @@ def read_all(agent: dict) -> list[Msg]:
         # opencode / mavis：暂不支持读取（格式未知）
     except Exception:
         pass
+    # 关键：过滤掉本工具自己写入的消息，否则 A→B 后 B 又读回来推给 A，形成无限回环
+    all_msgs = [m for m in all_msgs if not _is_sync_msg(m)]
     all_msgs.sort(key=lambda m: m.ts)
     return all_msgs
 
