@@ -640,37 +640,58 @@ class SyncEngine:
         self.running = False
         self.selected_agents: list[str] = []
         self.poll_interval = 10
+        self.last_stats: dict[str, dict] = {}
 
-    def snapshot(self, agents: list[dict]):
-        """初始快照：记录所有现有消息"""
+    def snapshot(self, agents: list[dict], history_limit: int = 0):
+        """初始快照：把现有消息记为已知，避免启动时全量推送。
+
+        history_limit > 0 时，每个 agent 最近 N 条不计入已知，
+        第一轮 sync 会把它们当作新消息推送（用于首次同步 / 验证链路）。
+        """
         for a in agents:
             if a["name"] not in self.selected_agents or not a["exists"]:
                 continue
             msgs = read_all(a)
-            self.detector.snapshot(a["name"], msgs)
+            if history_limit > 0:
+                ordered = sorted(msgs, key=lambda m: m.ts, reverse=True)
+                known_msgs = ordered[history_limit:]
+            else:
+                known_msgs = msgs
+            self.detector.snapshot(a["name"], known_msgs)
 
     def sync(self, agents: list[dict]) -> dict[str, dict]:
         """执行一轮同步，返回 {src→dst: {count, path, reason}}"""
         results: dict[str, dict] = {}
-        # 1. 收集每个选中 agent 的新消息
+        self.last_stats = {}
+        # 1. 收集每个选中 agent 的新消息（此处不标记，等写入成功后再标记）
         new_by_agent: dict[str, list[Msg]] = {}
         for a in agents:
             if a["name"] not in self.selected_agents or not a["exists"]:
                 continue
             msgs = read_all(a)
             new = self.detector.find_new(a["name"], msgs)
+            self.last_stats[a["name"]] = {"total": len(msgs), "new": len(new)}
             if new:
                 new_by_agent[a["name"]] = new
-                for m in new:
-                    self.detector.known.setdefault(a["name"], set()).add(self.detector._hash(m))
 
         # 2. 双向推送：每个源的新消息推给其他所有选中 agent
         for src_name, src_msgs in new_by_agent.items():
+            succeeded = False
+            targets = 0
             for a in agents:
                 if a["name"] not in self.selected_agents or not a["exists"]:
                     continue
                 if a["name"] == src_name:
                     continue
+                targets += 1
                 res = write_to_agent(a, src_msgs)
                 results[f"{src_name}→{a['name']}"] = res
+                if res.get("count", 0) > 0 and res.get("reason", "") == "ok":
+                    succeeded = True
+            # 至少一个目标写入成功（或没有目标）才标记为已知，否则下轮重试
+            if succeeded or targets == 0:
+                for m in src_msgs:
+                    self.detector.known.setdefault(src_name, set()).add(
+                        self.detector._hash(m)
+                    )
         return results

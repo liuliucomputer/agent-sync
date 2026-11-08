@@ -80,6 +80,12 @@ def _sync_loop():
     while _running:
         try:
             results = engine.sync(_agents_snapshot)
+            stats = getattr(engine, "last_stats", {}) or {}
+            if stats:
+                summary = ", ".join(
+                    f"{k}: 读{v['total']}/新{v['new']}" for k, v in stats.items()
+                )
+                log(f"本轮扫描 → {summary}", "info")
             if results:
                 for pair, res in results.items():
                     cnt = res.get("count", 0)
@@ -89,7 +95,7 @@ def _sync_loop():
                     elif cnt == 0 and reason and reason != "ok":
                         log(f"{pair}: {reason}", "warn")
             else:
-                log("本轮无新对话", "info")
+                log("本轮无新对话（只同步启动之后新产生的消息）", "info")
         except Exception as e:  # noqa: BLE001
             log(f"同步错误: {e}", "error")
         time.sleep(engine.poll_interval)
@@ -188,9 +194,27 @@ class Handler(SimpleHTTPRequestHandler):
                     "error": f"以下 Agent 未检测到数据，请填写正确路径或取消勾选：{', '.join(missing)}",
                 }, 400)
                 return
+            include_history = bool(body.get("include_history", False))
+            try:
+                history_limit = max(0, min(200, int(body.get("history_limit", 20) or 0)))
+            except (TypeError, ValueError):
+                history_limit = 20
             engine.selected_agents = selected
-            engine.snapshot(_agents_snapshot)
+            engine.snapshot(_agents_snapshot, history_limit if include_history else 0)
             log(f"开始同步，已选择: {', '.join(selected)}", "info")
+            for a in _agents_snapshot:
+                if a["name"] in selected and a["exists"]:
+                    n = len(read_all(a))
+                    if n == 0:
+                        log(
+                            f"提示：{a['name']} 目录存在但读到 0 条对话，该格式暂不支持读取",
+                            "warn",
+                        )
+            if include_history:
+                log(
+                    f"首次同步：将把每个 Agent 最近 {history_limit} 条历史对话推送给其他 Agent",
+                    "info",
+                )
             log("初始快照完成", "success")
             if not _running:
                 _running = True

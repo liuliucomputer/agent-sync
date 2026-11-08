@@ -187,6 +187,18 @@ python server.py
       <button class="act ghost" id="refreshBtn">🔄 刷新检测</button>
       <span class="statusline" id="status">● 就绪</span>
     </div>
+    <div style="margin-top:10px; font-size:12px; color:var(--dim); line-height:1.9;">
+      <label style="cursor:pointer;">
+        <input type="checkbox" id="includeHistory" checked style="vertical-align:middle;" />
+        首次同步带上每个 Agent 最近
+        <input type="number" id="historyLimit" value="20" min="1" max="200"
+               style="width:56px; vertical-align:middle;" />
+        条历史对话
+      </label>
+      <br />
+      不勾选则只同步「启动之后新产生」的对话 —— 若期间没发新消息，日志会显示读到了大量消息但新增 0 条。
+      勾选会立即把历史写入其他 Agent 目录，方便验证同步链路。
+    </div>
   </div>
 
   <div class="panel">
@@ -296,10 +308,13 @@ async function start() {
     if (v && !v.startsWith("(")) custom_paths[el.dataset.path] = v;
   });
 
+  const include_history = $("#includeHistory").checked;
+  const history_limit = parseInt($("#historyLimit").value, 10) || 20;
+
   const r = await fetch("/api/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ selected, custom_paths }),
+    body: JSON.stringify({ selected, custom_paths, include_history, history_limit }),
   });
   const d = await r.json();
   if (!d.ok) { alert(d.error || "启动失败"); return; }
